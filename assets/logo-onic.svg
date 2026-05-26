@@ -1,24 +1,10 @@
-<svg width="720" height="220" viewBox="0 0 720 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">ONIC Beauty logo</title>
-  <desc id="desc">Modern ONIC Beauty logo with elegant gold wordmark and crescent monogram.</desc>
-  <defs>
-    <linearGradient id="gold" x1="73" y1="31" x2="647" y2="188" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F3D9A6"/>
-      <stop offset="0.34" stop-color="#B88A4B"/>
-      <stop offset="0.68" stop-color="#F7E4B7"/>
-      <stop offset="1" stop-color="#8A6335"/>
-    </linearGradient>
-    <linearGradient id="softGold" x1="45" y1="42" x2="190" y2="176" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFF0C7"/>
-      <stop offset="0.55" stop-color="#C39255"/>
-      <stop offset="1" stop-color="#7F5A32"/>
-    </linearGradient>
-  </defs>
-  <rect width="720" height="220" rx="28" fill="#070B0A"/>
-  <circle cx="111" cy="110" r="62" stroke="url(#softGold)" stroke-width="10"/>
-  <path d="M137 64C115 68 96 86 91 110C86 134 96 158 116 171C81 166 54 137 54 110C54 76 82 48 116 48C124 48 132 50 137 64Z" fill="#070B0A"/>
-  <path d="M161 151C161 147.7 163.7 145 167 145C170.3 145 173 147.7 173 151C173 154.3 170.3 157 167 157C163.7 157 161 154.3 161 151Z" fill="url(#softGold)"/>
-  <text x="220" y="132" fill="url(#gold)" font-family="Georgia, 'Times New Roman', serif" font-size="86" font-weight="400">ONIC</text>
-  <path d="M220 162H558" stroke="url(#gold)" stroke-width="1.4" stroke-linecap="round" opacity="0.65"/>
-  <text x="222" y="186" fill="#E9D7B7" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="600" letter-spacing="6">BEAUTY STUDIO</text>
+<svg width="720" height="180" viewBox="0 0 720 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ONIC Beauty</title>
+  <desc id="desc">Minimal ONIC Beauty black wordmark.</desc>
+  <path d="M88 42C48 42 18 72 18 110C18 148 48 174 88 174C128 174 158 146 158 108C158 70 128 42 88 42ZM88 56C120 56 141 78 141 108C141 138 120 160 88 160C56 160 35 138 35 110C35 80 56 56 88 56Z" fill="#050505"/>
+  <path d="M72 64C55 72 45 88 45 110C45 133 57 149 76 156C55 153 36 134 36 110C36 85 52 67 72 64Z" fill="#fffefa"/>
+  <circle cx="163" cy="151" r="5" fill="#050505"/>
+  <text x="218" y="113" fill="#050505" font-family="Didot, 'Bodoni 72', 'Times New Roman', serif" font-size="86" font-weight="400">ONIC</text>
+  <path d="M219 135H514" stroke="#050505" stroke-width="1"/>
+  <text x="220" y="160" fill="#050505" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="7">BEAUTY STUDIO</text>
 </svg>

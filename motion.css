@@ -1,0 +1,170 @@
+/* Photographic depth: transforms only, with native scrolling and a static fallback. */
+:root { --parallax-y: 0px; --depth-x: 0px; --depth-y: 0px; }
+.home-video-page { overflow: visible; background: var(--lux-paper); }
+.home-main { overflow: clip; }
+.cover-story { position: relative; height: 150vh; height: 150svh; --cover-progress: 0; }
+.cover-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 640px; color: var(--lux-white); isolation: isolate; }
+.cover-sticky .demo-slide { animation: none; opacity: 0; transition: opacity 1.3s ease; pointer-events: none; }
+.cover-sticky .demo-slide:first-child, .cover-sticky .demo-slide.is-active { opacity: 0; }
+.cover-sticky .demo-slide.is-active { opacity: 1; }
+[data-parallax-scene] { position: relative; }
+.cover-sticky[data-parallax-scene] { position: sticky; }
+.cover-sticky .demo-slide img,
+.treatment-photo img,
+.ritual-banner > img,
+.motion-frame img[data-parallax],
+.carousel-slide img[data-parallax],
+.gallery-photo img[data-parallax] {
+  position: absolute;
+  inset: -12% -10%;
+  width: 120%;
+  height: 124%;
+  max-width: none;
+  object-fit: cover;
+  animation: none;
+  transform: translate3d(var(--depth-x), calc(var(--parallax-y) + var(--depth-y)), 0) scale(1.025);
+}
+.cover-sticky .demo-slide img { object-position: 60% center; filter: saturate(0.65) contrast(1.03); }
+.cover-sticky .video-shade { z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(5, 5, 5, .72), rgba(5, 5, 5, .23) 66%), linear-gradient(0deg, rgba(5, 5, 5, .65), transparent 35%); }
+.cover-content { position: absolute; z-index: 3; left: max(7vw, calc((100vw - 1200px) / 2)); top: 50%; width: min(850px, 85%); transform: translate3d(0, calc(-46% - var(--cover-progress) * 42px), 0); }
+.cover-content .eyebrow { color: rgba(255, 254, 250, .82); font-size: .68rem; margin-bottom: 25px; }
+.cover-content h1 { max-width: 14ch; color: var(--lux-white); font-size: 7.3rem; line-height: .97; font-weight: 400; margin: 0 0 26px; }
+.cover-content h1 em, .home-rituals h2 em, .ritual-banner h2 em { font-weight: 400; }
+.cover-copy { color: rgba(255, 254, 250, .8); font-size: 1.05rem; margin-bottom: 30px; line-height: 1.65; }
+.cover-content .hero-actions { align-items: center; gap: 28px; }
+.cover-content .button.primary { background: var(--lux-white); color: var(--lux-black); border-color: var(--lux-white); gap: 30px; min-height: 54px; padding: 16px 22px; }
+.cover-content .button.primary:hover { color: var(--lux-white); background: transparent; }
+.cover-link { padding-block: 12px; font-size: .72rem; border-bottom: 1px solid rgba(255, 254, 250, .5); }
+.cover-link span { margin-left: 18px; }
+.cover-orbit { position: absolute; z-index: 2; width: 34vw; aspect-ratio: 1; right: -5vw; top: 19%; border: 1px solid rgba(255, 254, 250, .3); border-radius: 50%; transform: translateY(calc(var(--cover-progress) * -100px)); pointer-events: none; }
+.cover-orbit::before { content: ''; position: absolute; inset: 16%; border: 1px solid rgba(255, 254, 250, .16); border-radius: 50%; }
+.cover-orbit span { position: absolute; left: -13px; top: 45%; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #f6f4ef; color: #050505; font: italic 17px Georgia, serif; }
+.cover-bottom { position: absolute; z-index: 4; bottom: 36px; left: 7vw; right: 7vw; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+.scroll-cue { display: flex; gap: 16px; align-items: center; font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; }
+.scroll-line { width: 1px; height: 42px; display: block; background: linear-gradient(transparent, var(--lux-white)); }
+.cover-controls { display: flex; gap: 9px; align-items: center; }
+.cover-caption { margin-right: 18px; min-width: 205px; }
+.cover-caption span { font-size: .6rem; opacity: .7; }
+.cover-caption p { margin: 4px 0 0; font-size: .72rem; }
+.cover-arrow, .cover-pause { display: grid; place-items: center; flex: 0 0 auto; color: var(--lux-white); background: rgba(5, 5, 5, .2); border: 1px solid rgba(255, 254, 250, .45); cursor: pointer; }
+.cover-arrow { width: 42px; height: 42px; font-size: 19px; }
+.cover-pause { height: 42px; min-width: 74px; font: 10px Arial, sans-serif; padding: 8px; }
+.cover-arrow:hover, .cover-pause:hover { color: var(--lux-black); background: var(--lux-white); }
+.cover-pause:disabled { opacity: .7; cursor: default; }
+.cover-edge { position: absolute; right: 26px; top: 50%; z-index: 2; writing-mode: vertical-rl; font: italic 13px Georgia, serif; opacity: .7; }
+.video-header { transition: background 250ms ease, border-color 250ms ease; }
+.video-header.is-scrolled { background: rgba(5, 5, 5, .93); }
+.home-rituals { padding-block: 110px 120px; }
+.ritual-heading { display: grid; grid-template-columns: 1fr .65fr; column-gap: 12%; align-items: end; margin-bottom: 65px; }
+.ritual-heading .eyebrow { grid-column: 1 / -1; margin-bottom: 22px; }
+.ritual-heading h2 { font-size: 4.5rem; margin-bottom: 0; }
+.ritual-heading > p:last-child { color: var(--lux-muted); max-width: 320px; font-size: .93rem; line-height: 1.8; margin-bottom: 5px; }
+.treatment-grid { display: grid; grid-template-columns: 1fr .88fr 1fr; align-items: start; gap: 32px; }
+.treatment-item { display: block; min-width: 0; }
+.treatment-item:nth-child(2) { margin-top: 105px; }
+.treatment-item:nth-child(3) { margin-top: 40px; }
+.treatment-photo { aspect-ratio: 3 / 4; overflow: hidden; background: #dedad1; isolation: isolate; }
+.treatment-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 70%, rgba(0, 0, 0, .25)); pointer-events: none; }
+.treatment-photo img { filter: saturate(.65); transition: filter 500ms ease; }
+.treatment-item:hover img { filter: saturate(1); }
+.photo-index { position: absolute; bottom: 15px; left: 18px; color: white; font: italic 34px Georgia, serif; z-index: 1; }
+.treatment-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-top: 22px; }
+.treatment-label h3 { font-family: Georgia, serif; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 1.4rem; }
+.treatment-label > span { transition: transform 220ms ease; }
+.treatment-item:hover .treatment-label > span { transform: translate(3px, -3px); }
+.treatment-item > p { font-size: .68rem; color: var(--lux-muted); text-transform: uppercase; letter-spacing: .08em; }
+.ritual-banner { min-height: 640px; height: 80vh; max-height: 900px; overflow: hidden; background: #1b2420; color: var(--lux-white); display: grid; place-items: center; isolation: isolate; }
+.ritual-banner > img { filter: saturate(.5); }
+.ritual-banner-shade { position: absolute; inset: 0; background: rgba(5, 5, 5, .56); z-index: 1; }
+.ritual-banner-content { position: relative; z-index: 2; text-align: center; padding: 60px 25px; }
+.ritual-banner .eyebrow { color: rgba(255, 254, 250, .75); margin-bottom: 30px; }
+.ritual-banner h2 { font-size: 6rem; margin-bottom: 38px; }
+.ritual-banner .button { gap: 40px; border-color: var(--lux-white); color: var(--lux-white); background: transparent; }
+.ritual-banner .button:hover { background: var(--lux-white); color: var(--lux-black); }
+.home-footer { display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; padding: 55px 7vw 65px; column-gap: 20px; }
+.home-footer strong { font: 1.8rem Georgia, serif; }
+.home-footer span, .home-footer a { font-size: .75rem; }
+.home-footer small { grid-column: 1 / -1; color: rgba(255, 254, 250, .45); font-size: .6rem; margin-top: 12px; }
+.will-reveal { opacity: 0; translate: 0 28px; transition: opacity 800ms ease, translate 900ms cubic-bezier(.2, .7, .2, 1); }
+.will-reveal.is-revealed, .will-reveal:focus-within { opacity: 1; translate: 0 0; }
+.motion-frame { animation: none; }
+.frame-main { rotate: -2deg; }
+.frame-top { rotate: 5deg; }
+.frame-bottom { rotate: -5deg; }
+.motion-frame img[data-parallax] { transition: filter 400ms ease; }
+.gallery-grid { background: transparent; gap: 22px; align-items: start; }
+.gallery-photo { margin: 0; aspect-ratio: 4 / 5; position: relative; overflow: hidden; background: #e5e0d7; }
+.gallery-photo:nth-child(2) { margin-top: 65px; }
+.carousel-slide { pointer-events: none; }
+.carousel-slide.is-active { pointer-events: auto; }
+.carousel-slide figcaption { z-index: 1; }
+.carousel-playback { min-height: 44px; padding: 8px 12px; background: transparent; color: var(--lux-black); border: 1px solid currentColor; font-size: .7rem; cursor: pointer; }
+:focus-visible { outline: 3px solid #a98652; outline-offset: 5px; }
+
+@media (min-width: 900px) {
+  .video-header .site-nav { background: transparent; border: 0; }
+}
+@media (min-width: 720px) and (max-width: 899px) {
+  .video-header .site-nav { background: var(--lux-white); }
+  .video-header .site-nav a { color: var(--lux-black); }
+  .video-header .site-nav .nav-cta { color: var(--lux-white); }
+}
+@media (max-width: 1100px) {
+  .cover-content h1 { font-size: 6rem; }
+  .ritual-heading h2 { font-size: 3.6rem; }
+  .treatment-grid { gap: 22px; }
+}
+@media (max-width: 719px) {
+  .cover-story { height: 125vh; height: 125svh; min-height: 780px; }
+  .cover-sticky { min-height: 780px; }
+  .cover-content { left: 7%; width: 86%; top: 44%; }
+  .cover-content h1 { font-size: 3.8rem; line-height: 1.02; margin-bottom: 22px; }
+  .cover-content .eyebrow { font-size: .6rem; margin-bottom: 22px; }
+  .cover-content .hero-actions { gap: 12px 22px; }
+  .cover-copy { font-size: .88rem; margin-bottom: 22px; }
+  .cover-content .button.primary { font-size: .65rem; min-height: 48px; padding: 14px 16px; gap: 20px; }
+  .cover-link { font-size: .67rem; }
+  .cover-orbit { width: 70vw; right: -27vw; top: 23%; opacity: .65; }
+  .cover-edge { display: none; }
+  .cover-bottom { bottom: 90px; left: 7%; right: 7%; flex-wrap: wrap; gap: 18px; }
+  .scroll-cue { font-size: .56rem; gap: 12px; }
+  .scroll-line { height: 24px; }
+  .cover-controls { width: 100%; gap: 6px; }
+  .cover-caption { margin-right: auto; min-width: 0; }
+  .cover-caption p { font-size: .62rem; max-width: 145px; }
+  .cover-arrow { width: 36px; height: 38px; }
+  .cover-pause { min-width: 60px; height: 38px; }
+  .home-rituals { padding-block: 72px 80px; }
+  .ritual-heading { grid-template-columns: 1fr; gap: 24px; margin-bottom: 38px; }
+  .ritual-heading .eyebrow { margin-bottom: 0; }
+  .ritual-heading h2 { font-size: 2.85rem; }
+  .ritual-heading > p:last-child { font-size: .88rem; }
+  .treatment-grid { grid-template-columns: 1fr; gap: 36px; }
+  .treatment-item:nth-child(2), .treatment-item:nth-child(3) { margin-top: 0; }
+  .treatment-item:nth-child(2) { width: 86%; margin-left: auto; }
+  .treatment-photo { aspect-ratio: 4 / 5; }
+  .treatment-label { padding-top: 17px; }
+  .ritual-banner { height: 75svh; min-height: 520px; }
+  .ritual-banner h2 { font-size: 3.8rem; }
+  .home-footer { grid-template-columns: 1fr; gap: 14px; padding-bottom: 110px; }
+  .gallery-photo:nth-child(2) { margin-top: 0; }
+  .carousel-controls { gap: 8px; flex-wrap: wrap; }
+  .carousel-playback { margin-left: auto; }
+}
+@media (max-width: 380px) {
+  .cover-content h1 { font-size: 3.35rem; }
+}
+@media (max-height: 680px) and (min-width: 720px) {
+  .cover-sticky { min-height: 560px; }
+  .cover-content h1 { font-size: 5rem; }
+  .cover-content { top: 46%; }
+  .cover-copy { margin-bottom: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cover-story { height: auto; }
+  .cover-sticky[data-parallax-scene] { position: relative; }
+  [data-parallax] { transform: scale(1.025) !important; }
+  .cover-content { transform: translateY(-46%); }
+  .cover-orbit { transform: none; }
+  .will-reveal { opacity: 1; translate: none; }
+}

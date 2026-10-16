@@ -14,13 +14,182 @@ if (menuToggle && siteNav) {
     }
   });
 
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && siteNav.classList.contains("is-open")) {
+      siteNav.classList.remove("is-open");
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.focus();
+    }
+  });
+
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
   siteNav.querySelectorAll("a").forEach((link) => {
     const linkPage = link.getAttribute("href");
     if (linkPage === currentPage) {
       link.classList.add("is-active");
+      link.setAttribute("aria-current", "page");
     }
   });
+}
+
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+// One on-demand animation loop for all photographic layers. Native scrolling stays intact.
+const parallaxElements = Array.from(document.querySelectorAll("[data-parallax]"));
+if (parallaxElements.length) {
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const layers = parallaxElements.map((element) => ({
+    element,
+    scene: element.closest("[data-parallax-scene]") || element.parentElement,
+    speed: Number(element.dataset.parallax) || 0,
+    depth: Number(element.dataset.depth) || 0,
+    y: 0,
+    visible: true,
+  }));
+  const coverStory = document.querySelector(".cover-story");
+  const header = document.querySelector(".video-header");
+  let frameId = 0;
+  let pointerX = 0;
+  let pointerY = 0;
+  let currentX = 0;
+  let currentY = 0;
+
+  const render = () => {
+    frameId = 0;
+    if (document.hidden || reducedMotion.matches) return;
+    const height = window.innerHeight;
+    const mobileFactor = window.innerWidth < 720 ? 0.45 : 1;
+    currentX += (pointerX - currentX) * 0.085;
+    currentY += (pointerY - currentY) * 0.085;
+    let unsettled = Math.abs(pointerX - currentX) + Math.abs(pointerY - currentY) > 0.002;
+
+    // Read geometry together before writing styles, avoiding layout thrashing.
+    const measurements = layers.filter((layer) => layer.visible).map((layer) => {
+      const rect = layer.scene.getBoundingClientRect();
+      const progress = Math.max(-1, Math.min(1, (height / 2 - rect.top - rect.height / 2) / ((height + rect.height) / 2)));
+      return { layer, target: progress * layer.speed * mobileFactor };
+    });
+    const storyRect = coverStory?.getBoundingClientRect();
+    const coverProgress = storyRect ? Math.max(0, Math.min(1, -storyRect.top / Math.max(1, storyRect.height - height))) : 0;
+
+    measurements.forEach(({ layer, target }) => {
+      layer.y += (target - layer.y) * 0.11;
+      unsettled ||= Math.abs(target - layer.y) > 0.1;
+      layer.element.style.setProperty("--parallax-y", `${layer.y.toFixed(2)}px`);
+      layer.element.style.setProperty("--depth-x", `${(currentX * layer.depth).toFixed(2)}px`);
+      layer.element.style.setProperty("--depth-y", `${(currentY * layer.depth).toFixed(2)}px`);
+    });
+    coverStory?.style.setProperty("--cover-progress", coverProgress.toFixed(4));
+    header?.classList.toggle("is-scrolled", window.scrollY > height * 0.8);
+    if (unsettled) schedule();
+  };
+
+  const schedule = () => {
+    if (!frameId && !document.hidden && !reducedMotion.matches) frameId = requestAnimationFrame(render);
+  };
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        layers.filter((layer) => layer.scene === entry.target).forEach((layer) => { layer.visible = entry.isIntersecting; });
+      });
+      schedule();
+    }, { rootMargin: "120px" });
+    new Set(layers.map((layer) => layer.scene)).forEach((scene) => observer.observe(scene));
+  }
+
+  window.addEventListener("scroll", schedule, { passive: true });
+  window.addEventListener("resize", schedule, { passive: true });
+  window.addEventListener("pointermove", (event) => {
+    if (!finePointer.matches || reducedMotion.matches) return;
+    pointerX = event.clientX / window.innerWidth - 0.5;
+    pointerY = event.clientY / window.innerHeight - 0.5;
+    schedule();
+  }, { passive: true });
+  document.documentElement.addEventListener("pointerleave", () => {
+    pointerX = pointerY = 0;
+    schedule();
+  });
+  document.addEventListener("visibilitychange", () => {
+    cancelAnimationFrame(frameId);
+    frameId = 0;
+    if (!document.hidden) schedule();
+  });
+  reducedMotion.addEventListener("change", () => {
+    cancelAnimationFrame(frameId);
+    frameId = 0;
+    if (reducedMotion.matches) {
+      layers.forEach((layer) => {
+        layer.y = 0;
+        ["--parallax-y", "--depth-x", "--depth-y"].forEach((name) => layer.element.style.removeProperty(name));
+      });
+      coverStory?.style.removeProperty("--cover-progress");
+    } else schedule();
+  });
+  schedule();
+}
+
+// Content remains visible without JavaScript or IntersectionObserver support.
+const revealElements = document.querySelectorAll("[data-reveal]");
+if ("IntersectionObserver" in window && !reducedMotion.matches) {
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-revealed");
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  revealElements.forEach((element) => {
+    element.classList.add("will-reveal");
+    revealObserver.observe(element);
+  });
+}
+
+const cover = document.querySelector("[data-cover]");
+if (cover) {
+  const slides = Array.from(cover.querySelectorAll("[data-cover-slide]"));
+  const pauseButton = cover.querySelector("[data-cover-pause]");
+  let activeIndex = 0;
+  let timerId = 0;
+  let userPaused = false;
+  let hovered = false;
+  let inView = true;
+  const show = (index) => {
+    activeIndex = (index + slides.length) % slides.length;
+    slides.forEach((slide, i) => {
+      slide.classList.toggle("is-active", i === activeIndex);
+      slide.setAttribute("aria-hidden", String(i !== activeIndex));
+    });
+    cover.querySelector("[data-cover-number]").textContent = `${String(activeIndex + 1).padStart(2, "0")} / ${String(slides.length).padStart(2, "0")}`;
+    cover.querySelector("[data-cover-caption]").textContent = slides[activeIndex].dataset.caption;
+  };
+  const syncPlayback = () => {
+    clearInterval(timerId);
+    const paused = userPaused || reducedMotion.matches;
+    pauseButton.setAttribute("aria-pressed", String(paused));
+    pauseButton.setAttribute("aria-label", paused ? "Reanudar presentación de portada" : "Pausar presentación de portada");
+    pauseButton.textContent = reducedMotion.matches ? "Manual" : userPaused ? "Reanudar" : "Pausar";
+    pauseButton.disabled = reducedMotion.matches;
+    if (!paused && !hovered && inView && !document.hidden && !cover.contains(document.activeElement)) {
+      timerId = window.setInterval(() => show(activeIndex + 1), 6500);
+    }
+  };
+  cover.querySelector("[data-cover-prev]").addEventListener("click", () => { userPaused = true; show(activeIndex - 1); syncPlayback(); });
+  cover.querySelector("[data-cover-next]").addEventListener("click", () => { userPaused = true; show(activeIndex + 1); syncPlayback(); });
+  pauseButton.addEventListener("click", () => { userPaused = !userPaused; syncPlayback(); });
+  cover.addEventListener("pointerenter", (event) => { if (event.pointerType === "mouse") { hovered = true; syncPlayback(); } });
+  cover.addEventListener("pointerleave", () => { hovered = false; syncPlayback(); });
+  cover.addEventListener("focusin", syncPlayback);
+  cover.addEventListener("focusout", () => setTimeout(syncPlayback, 0));
+  document.addEventListener("visibilitychange", syncPlayback);
+  reducedMotion.addEventListener("change", syncPlayback);
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; syncPlayback(); });
+    observer.observe(cover);
+  }
+  show(0);
+  syncPlayback();
 }
 
 document.querySelectorAll("[data-carousel]").forEach((carousel) => {
@@ -28,16 +197,27 @@ document.querySelectorAll("[data-carousel]").forEach((carousel) => {
   const prev = carousel.querySelector("[data-carousel-prev]");
   const next = carousel.querySelector("[data-carousel-next]");
   const dotsWrap = carousel.querySelector(".carousel-dots");
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let activeIndex = 0;
   let autoplayId;
   let touchStartX = 0;
+  let userPaused = false;
+  const playback = document.createElement("button");
+  playback.type = "button";
+  playback.className = "carousel-playback";
+  carousel.querySelector(".carousel-controls")?.append(playback);
+  const updatePlayback = () => {
+    playback.textContent = reducedMotion.matches ? "Manual" : userPaused ? "Reanudar" : "Pausar";
+    playback.setAttribute("aria-label", userPaused ? "Reanudar carrusel" : "Pausar carrusel");
+    playback.setAttribute("aria-pressed", String(userPaused || reducedMotion.matches));
+    playback.disabled = reducedMotion.matches;
+  };
 
   const setActive = (index) => {
     activeIndex = (index + slides.length) % slides.length;
 
     slides.forEach((slide, slideIndex) => {
       slide.classList.toggle("is-active", slideIndex === activeIndex);
+      slide.setAttribute("aria-hidden", String(slideIndex !== activeIndex));
     });
 
     dotsWrap?.querySelectorAll("button").forEach((dot, dotIndex) => {
@@ -47,6 +227,8 @@ document.querySelectorAll("[data-carousel]").forEach((carousel) => {
   };
 
   const pauseAutoplay = () => {
+    userPaused = true;
+    updatePlayback();
     if (autoplayId) {
       window.clearInterval(autoplayId);
     }
@@ -88,7 +270,14 @@ document.querySelectorAll("[data-carousel]").forEach((carousel) => {
 
   setActive(0);
 
-  if (!prefersReducedMotion && slides.length > 1) {
-    autoplayId = window.setInterval(() => setActive(activeIndex + 1), 5200);
-  }
+  const syncAutoplay = () => {
+    window.clearInterval(autoplayId);
+    updatePlayback();
+    if (!reducedMotion.matches && !document.hidden && !userPaused && slides.length > 1) autoplayId = window.setInterval(() => setActive(activeIndex + 1), 5200);
+  };
+  playback.addEventListener("click", () => { userPaused = !userPaused; syncAutoplay(); });
+  carousel.addEventListener("focusin", (event) => { if (event.target !== playback) pauseAutoplay(); });
+  reducedMotion.addEventListener("change", syncAutoplay);
+  document.addEventListener("visibilitychange", syncAutoplay);
+  syncAutoplay();
 });

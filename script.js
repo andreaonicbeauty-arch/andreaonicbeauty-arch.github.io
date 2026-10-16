@@ -43,6 +43,7 @@ if (parallaxElements.length) {
     scene: element.closest("[data-parallax-scene]") || element.parentElement,
     speed: Number(element.dataset.parallax) || 0,
     depth: Number(element.dataset.depth) || 0,
+    tilt: Number(element.dataset.tilt) || 0,
     y: 0,
     visible: true,
   }));
@@ -67,17 +68,24 @@ if (parallaxElements.length) {
     const measurements = layers.filter((layer) => layer.visible).map((layer) => {
       const rect = layer.scene.getBoundingClientRect();
       const progress = Math.max(-1, Math.min(1, (height / 2 - rect.top - rect.height / 2) / ((height + rect.height) / 2)));
-      return { layer, target: progress * layer.speed * mobileFactor };
+      const frame = layer.element.parentElement.getBoundingClientRect();
+      const travel = layer.element.tagName === "IMG"
+        ? Math.max(0, frame.height * 0.11 - layer.depth * 0.5 - frame.width * 0.012 - 3)
+        : Infinity;
+      const target = Math.max(-travel, Math.min(travel, progress * layer.speed * mobileFactor));
+      return { layer, progress, target };
     });
     const storyRect = coverStory?.getBoundingClientRect();
     const coverProgress = storyRect ? Math.max(0, Math.min(1, -storyRect.top / Math.max(1, storyRect.height - height))) : 0;
 
-    measurements.forEach(({ layer, target }) => {
+    measurements.forEach(({ layer, progress, target }) => {
       layer.y += (target - layer.y) * 0.11;
       unsettled ||= Math.abs(target - layer.y) > 0.1;
       layer.element.style.setProperty("--parallax-y", `${layer.y.toFixed(2)}px`);
-      layer.element.style.setProperty("--depth-x", `${(currentX * layer.depth).toFixed(2)}px`);
-      layer.element.style.setProperty("--depth-y", `${(currentY * layer.depth).toFixed(2)}px`);
+      layer.element.style.setProperty("--depth-x", `${(currentX * layer.depth * mobileFactor).toFixed(2)}px`);
+      layer.element.style.setProperty("--depth-y", `${(currentY * layer.depth * mobileFactor).toFixed(2)}px`);
+      layer.element.style.setProperty("--photo-zoom", (1.025 + Math.abs(progress) * 0.035 * mobileFactor).toFixed(4));
+      layer.element.style.setProperty("--photo-roll", `${(progress * layer.tilt * mobileFactor).toFixed(3)}deg`);
     });
     coverStory?.style.setProperty("--cover-progress", coverProgress.toFixed(4));
     header?.classList.toggle("is-scrolled", window.scrollY > height * 0.8);
@@ -121,7 +129,7 @@ if (parallaxElements.length) {
     if (reducedMotion.matches) {
       layers.forEach((layer) => {
         layer.y = 0;
-        ["--parallax-y", "--depth-x", "--depth-y"].forEach((name) => layer.element.style.removeProperty(name));
+        ["--parallax-y", "--depth-x", "--depth-y", "--photo-zoom", "--photo-roll"].forEach((name) => layer.element.style.removeProperty(name));
       });
       coverStory?.style.removeProperty("--cover-progress");
     } else schedule();

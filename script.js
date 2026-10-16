@@ -32,7 +32,34 @@ if (menuToggle && siteNav) {
   });
 }
 
-const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const systemMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+let motionChoice = null;
+try { motionChoice = localStorage.getItem("onic-motion"); } catch {}
+const reducedMotion = new EventTarget();
+Object.defineProperty(reducedMotion, "matches", { get: () => motionChoice === "off" || (motionChoice !== "on" && systemMotion.matches) });
+const motionButton = document.createElement("button");
+motionButton.type = "button";
+motionButton.className = "motion-toggle";
+const syncMotion = () => {
+  document.documentElement.classList.toggle("motion-enabled", !reducedMotion.matches);
+  document.documentElement.classList.toggle("motion-disabled", reducedMotion.matches);
+  motionButton.textContent = reducedMotion.matches ? "Activar parallax ↗" : "Parallax activado ◉";
+  motionButton.setAttribute("aria-label", reducedMotion.matches ? "Activar efectos parallax" : "Desactivar efectos parallax");
+  motionButton.setAttribute("aria-pressed", String(!reducedMotion.matches));
+};
+motionButton.addEventListener("click", () => {
+  motionChoice = reducedMotion.matches ? "on" : "off";
+  try { localStorage.setItem("onic-motion", motionChoice); } catch {}
+  syncMotion();
+  reducedMotion.dispatchEvent(new Event("change"));
+});
+systemMotion.addEventListener("change", () => { syncMotion(); reducedMotion.dispatchEvent(new Event("change")); });
+document.body.append(motionButton);
+syncMotion();
+document.querySelectorAll(".brand-logo").forEach((logo) => {
+  logo.dataset.parallax = "5";
+  logo.dataset.depth = "4";
+});
 
 // One on-demand animation loop for all photographic layers. Native scrolling stays intact.
 const parallaxElements = Array.from(document.querySelectorAll("[data-parallax]"));
@@ -59,24 +86,27 @@ if (parallaxElements.length) {
     frameId = 0;
     if (document.hidden || reducedMotion.matches) return;
     const height = window.innerHeight;
-    const mobileFactor = window.innerWidth < 720 ? 0.45 : 1;
+    const mobileFactor = window.innerWidth < 720 ? 0.75 : 1;
     currentX += (pointerX - currentX) * 0.085;
     currentY += (pointerY - currentY) * 0.085;
     let unsettled = Math.abs(pointerX - currentX) + Math.abs(pointerY - currentY) > 0.002;
 
     // Read geometry together before writing styles, avoiding layout thrashing.
-    const measurements = layers.filter((layer) => layer.visible).map((layer) => {
-      const rect = layer.scene.getBoundingClientRect();
-      const progress = Math.max(-1, Math.min(1, (height / 2 - rect.top - rect.height / 2) / ((height + rect.height) / 2)));
-      const frame = layer.element.parentElement.getBoundingClientRect();
-      const travel = layer.element.tagName === "IMG"
-        ? Math.max(0, frame.height * 0.11 - layer.depth * 0.5 - frame.width * 0.012 - 3)
-        : Infinity;
-      const target = Math.max(-travel, Math.min(travel, progress * layer.speed * mobileFactor));
-      return { layer, progress, target };
-    });
     const storyRect = coverStory?.getBoundingClientRect();
     const coverProgress = storyRect ? Math.max(0, Math.min(1, -storyRect.top / Math.max(1, storyRect.height - height))) : 0;
+    const measurements = layers.filter((layer) => layer.visible).map((layer) => {
+      const rect = layer.scene.getBoundingClientRect();
+      const progress = layer.scene.classList.contains("cover-sticky")
+        ? coverProgress * 1.6 - 0.35
+        : Math.max(-1, Math.min(1, (height / 2 - rect.top - rect.height / 2) / ((height + rect.height) / 2)));
+      const frame = layer.element.parentElement.getBoundingClientRect();
+      const brand = layer.element.classList.contains("brand-logo");
+      const travel = brand ? 5 : layer.element.tagName === "IMG"
+        ? Math.max(0, frame.height * 0.24 - layer.depth * 0.5 - frame.width * 0.016 - 5)
+        : Infinity;
+      const target = Math.max(-travel, Math.min(travel, progress * layer.speed * (brand ? 1 : 4) * mobileFactor));
+      return { layer, progress, target };
+    });
 
     measurements.forEach(({ layer, progress, target }) => {
       layer.y += (target - layer.y) * 0.11;
@@ -84,7 +114,7 @@ if (parallaxElements.length) {
       layer.element.style.setProperty("--parallax-y", `${layer.y.toFixed(2)}px`);
       layer.element.style.setProperty("--depth-x", `${(currentX * layer.depth * mobileFactor).toFixed(2)}px`);
       layer.element.style.setProperty("--depth-y", `${(currentY * layer.depth * mobileFactor).toFixed(2)}px`);
-      layer.element.style.setProperty("--photo-zoom", (1.025 + Math.abs(progress) * 0.035 * mobileFactor).toFixed(4));
+      layer.element.style.setProperty("--photo-zoom", (1.04 + Math.abs(progress) * 0.08 * mobileFactor).toFixed(4));
       layer.element.style.setProperty("--photo-roll", `${(progress * layer.tilt * mobileFactor).toFixed(3)}deg`);
     });
     coverStory?.style.setProperty("--cover-progress", coverProgress.toFixed(4));

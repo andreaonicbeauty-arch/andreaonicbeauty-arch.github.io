@@ -32,30 +32,11 @@ if (menuToggle && siteNav) {
   });
 }
 
-const systemMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-let motionChoice = null;
-try { motionChoice = localStorage.getItem("onic-motion"); } catch {}
-const reducedMotion = new EventTarget();
-Object.defineProperty(reducedMotion, "matches", { get: () => motionChoice === "off" || (motionChoice !== "on" && systemMotion.matches) });
-const motionButton = document.createElement("button");
-motionButton.type = "button";
-motionButton.className = "motion-toggle";
-const syncMotion = () => {
-  document.documentElement.classList.toggle("motion-enabled", !reducedMotion.matches);
-  document.documentElement.classList.toggle("motion-disabled", reducedMotion.matches);
-  motionButton.textContent = reducedMotion.matches ? "Activar parallax ↗" : "Parallax activado ◉";
-  motionButton.setAttribute("aria-label", reducedMotion.matches ? "Activar efectos parallax" : "Desactivar efectos parallax");
-  motionButton.setAttribute("aria-pressed", String(!reducedMotion.matches));
-};
-motionButton.addEventListener("click", () => {
-  motionChoice = reducedMotion.matches ? "on" : "off";
-  try { localStorage.setItem("onic-motion", motionChoice); } catch {}
-  syncMotion();
-  reducedMotion.dispatchEvent(new Event("change"));
-});
-systemMotion.addEventListener("change", () => { syncMotion(); reducedMotion.dispatchEvent(new Event("change")); });
-document.body.append(motionButton);
-syncMotion();
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+// Parallax starts automatically; carousel autoplay still follows the system preference.
+document.documentElement.classList.add("motion-enabled");
+document.documentElement.classList.remove("motion-disabled");
+try { localStorage.removeItem("onic-motion"); } catch {}
 document.querySelectorAll(".brand-logo").forEach((logo) => {
   logo.dataset.parallax = "5";
   logo.dataset.depth = "4";
@@ -84,7 +65,7 @@ if (parallaxElements.length) {
 
   const render = () => {
     frameId = 0;
-    if (document.hidden || reducedMotion.matches) return;
+    if (document.hidden) return;
     const height = window.innerHeight;
     const mobileFactor = window.innerWidth < 720 ? 0.75 : 1;
     currentX += (pointerX - currentX) * 0.085;
@@ -123,7 +104,7 @@ if (parallaxElements.length) {
   };
 
   const schedule = () => {
-    if (!frameId && !document.hidden && !reducedMotion.matches) frameId = requestAnimationFrame(render);
+    if (!frameId && !document.hidden) frameId = requestAnimationFrame(render);
   };
 
   if ("IntersectionObserver" in window) {
@@ -139,7 +120,7 @@ if (parallaxElements.length) {
   window.addEventListener("scroll", schedule, { passive: true });
   window.addEventListener("resize", schedule, { passive: true });
   window.addEventListener("pointermove", (event) => {
-    if (!finePointer.matches || reducedMotion.matches) return;
+    if (!finePointer.matches) return;
     pointerX = event.clientX / window.innerWidth - 0.5;
     pointerY = event.clientY / window.innerHeight - 0.5;
     schedule();
@@ -152,17 +133,6 @@ if (parallaxElements.length) {
     cancelAnimationFrame(frameId);
     frameId = 0;
     if (!document.hidden) schedule();
-  });
-  reducedMotion.addEventListener("change", () => {
-    cancelAnimationFrame(frameId);
-    frameId = 0;
-    if (reducedMotion.matches) {
-      layers.forEach((layer) => {
-        layer.y = 0;
-        ["--parallax-y", "--depth-x", "--depth-y", "--photo-zoom", "--photo-roll"].forEach((name) => layer.element.style.removeProperty(name));
-      });
-      coverStory?.style.removeProperty("--cover-progress");
-    } else schedule();
   });
   schedule();
 }

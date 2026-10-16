@@ -44,7 +44,11 @@ document.querySelectorAll(".brand-logo").forEach((logo) => {
 
 // One on-demand animation loop for all photographic layers. Native scrolling stays intact.
 const parallaxElements = Array.from(document.querySelectorAll("[data-parallax]"));
-if (parallaxElements.length) {
+const filmScenes = Array.from(document.querySelectorAll("[data-film]")).map((element) => {
+  element.classList.add("film-ready");
+  return { element, copies: Array.from(element.querySelectorAll("[data-film-copy]")), progress: 0 };
+});
+if (parallaxElements.length || filmScenes.length) {
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
   const layers = parallaxElements.map((element) => ({
     element,
@@ -88,6 +92,10 @@ if (parallaxElements.length) {
       const target = Math.max(-travel, Math.min(travel, progress * layer.speed * (brand ? 1 : 4) * mobileFactor));
       return { layer, progress, target };
     });
+    const filmMeasurements = filmScenes.map((scene) => {
+      const rect = scene.element.getBoundingClientRect();
+      return { scene, target: Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height - height))), visible: rect.bottom > 0 && rect.top < height };
+    });
 
     measurements.forEach(({ layer, progress, target }) => {
       layer.y += (target - layer.y) * 0.11;
@@ -97,6 +105,27 @@ if (parallaxElements.length) {
       layer.element.style.setProperty("--depth-y", `${(currentY * layer.depth * mobileFactor).toFixed(2)}px`);
       layer.element.style.setProperty("--photo-zoom", (1.04 + Math.abs(progress) * 0.08 * mobileFactor).toFixed(4));
       layer.element.style.setProperty("--photo-roll", `${(progress * layer.tilt * mobileFactor).toFixed(3)}deg`);
+    });
+    const smoothRange = (value, start, end) => {
+      const t = Math.max(0, Math.min(1, (value - start) / (end - start)));
+      return t * t * (3 - 2 * t);
+    };
+    filmMeasurements.forEach(({ scene, target, visible }) => {
+      if (!visible) return;
+      scene.progress += (target - scene.progress) * 0.12;
+      unsettled ||= Math.abs(target - scene.progress) > 0.0005;
+      const p = scene.progress;
+      const product = smoothRange(p, 0.2, 0.48);
+      const petals = smoothRange(p, 0.36, 0.65);
+      const alphas = [1 - smoothRange(p, 0.12, 0.32), smoothRange(p, 0.32, 0.45) * (1 - smoothRange(p, 0.64, 0.78)), smoothRange(p, 0.78, 0.92)];
+      scene.element.style.setProperty("--film-p", p.toFixed(4));
+      scene.element.style.setProperty("--film-product", product.toFixed(4));
+      scene.element.style.setProperty("--film-petals", petals.toFixed(4));
+      scene.copies.forEach((copy, index) => {
+        copy.style.setProperty("--film-copy-alpha", alphas[index].toFixed(4));
+        copy.inert = alphas[index] < 0.5;
+        copy.setAttribute("aria-hidden", String(alphas[index] < 0.5));
+      });
     });
     coverStory?.style.setProperty("--cover-progress", coverProgress.toFixed(4));
     header?.classList.toggle("is-scrolled", window.scrollY > height * 0.8);
